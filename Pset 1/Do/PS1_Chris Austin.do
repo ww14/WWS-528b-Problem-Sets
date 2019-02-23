@@ -131,7 +131,7 @@ replace X3129 = 0 if X3129 == -1
 replace X3229 = 0 if X3229 == -1
 replace X3335 = 0 if X3335 == -1
 gen ActBusiness = X3129 + X3229 + X3335
-label variable ActBusiness "Value of actively managed business
+label variable ActBusiness "Value of actively managed business"
 drop X3129 X3229 X3335
 
 *NON-ACTIVELY MANAGED BUSINESSES
