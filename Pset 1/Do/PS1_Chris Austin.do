@@ -438,8 +438,7 @@ label variable selfemp "R working for someone else or self-employed?"
 label variable selfemp_s "Spouse/partner working for someone else or self-employed?"
 replace selfemp = 1 if selfemp > 1
 
-*create new indicator for self employment to store entrepreneurship share values 
-*for each percentile.
+*create new variable to store entrepreneurship share values for each percentile.
 gen selfempi = .
 
 forval i = 1/5 {
@@ -465,8 +464,7 @@ replace race = 0 if race != 1
 label define rac 0 "Other" 1 "White"
 label values race rac
 
-*create new indicator for self employment to store entrepreneurship share values 
-*for each percentile.
+*create new variable to store race share values for each percentile.
 gen racei = .
 
 forval i = 1/5 {
