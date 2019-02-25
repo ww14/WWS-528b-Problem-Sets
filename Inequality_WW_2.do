@@ -47,20 +47,21 @@ using p16i6.dta
 
 set more off
 set matsize 10000
+ssc install pshare
 cap log close 
 pause on
 log using 582b_William, replace 
 
 
-rename YY1 id
-// Get replicate numbers
-gen repl = mod(id,10)
-replace id = (id-repl)/10
+rename YY1 name
 rename X42001 weight
 rename X14 age
 rename X8023 marstat
 
-/********************************Assets***************************************/ 
+
+/******************************************************************************/
+								*Assets
+/******************************************************************************/
 
 /*Certificate of Deposit*/
 rename X3721 CDs
@@ -241,11 +242,10 @@ label variable Pension2 "Current and future pension benefits"
 drop X6462 X6467 X6472 X6477 X6958 X6957 X5604 X5612 X5620 X5628 X6997 
 
 	 
-	 
-*What about current pension recipt??
+/******************************************************************************/
+								*Liabilities
+/******************************************************************************/
 
-/******************************Liabilities*************************************/
-	 
 /*Credit Card*/ 
 foreach var of varlist X413 X421 X427 X7575 {
 replace `var'=0 if `var'==-1
@@ -311,7 +311,9 @@ gen HomeEquityLoan = X1715 + X1815 + X2006 + X2016
 label var HomeEquityLoan "Loans against property investments and vacation homes"
 drop X1715 X1815 X2006 X2016
 
-/******************************Net Wealth*************************************/
+/******************************************************************************/
+							*Net Wealth
+/******************************************************************************/
 gen assets= CDs + Checking + Savings + MutualFund + Bonds + Stocks ///
 			+ Annuities + Farm + ActiveBus + NABus + netowedfrombus ///
 			+ moneylent + Vehicles + IRA + LifeInsurance + MiscAssets ///
@@ -325,6 +327,48 @@ gen wtwealth = weight*wealth
 gen lnwealth = log(wealth)
 gen lnwtwealth = log(wtwealth)
 
+/******************************************************************************/
+							*Section 1
+/******************************************************************************/
+*Method 1
+sort wealth
+pshare estimate wealth, p(50 90 99 100) density 
+pshare histogram, ylabel(0(0.5)5, angle(hor)) ti(Wealth distribution) ///
+	noci  prange(0 95)
+
+sort lnwealth
+pshare estimate lnwealth, p(0(5)95) density
+pshare histogram, ylabel(0(0.25)1.5, angle(hor)) ti(Wealth distribution) ///
+	noci prange(0 95)
+pause
+
+*Method 2
+sort wealth 
+gen id=_n if wealth !=.
+sum id
+gen popshare=id/`r(max)'*100
+label var popshare "Percent of population" 
+
+qui egen totalwealth=total(wealth)
+sort wealth 
+gen wealth1=(wealth/totalwealth)*100
+
+gen wealthshare=.
+forval i=1/100{
+	replace wealthshare=sum(wealth1) if popshare<=`i'
+}
+label var wealthshare "Percent of wealth 
+
+hist wealth if popshare<=95
+
+hist lnwealth if popshare <=95
+
+
+/******************************************************************************/
+							*Section 2
+/******************************************************************************/
+sort wealth
+pshare estimate wealth, p(50(5)95) density 
 
 /**/
 
