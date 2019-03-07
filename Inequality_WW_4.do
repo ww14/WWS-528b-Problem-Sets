@@ -352,7 +352,7 @@ divide the weights by 5.*/
 gen weight = X42001/5 
 
 gen wealthwt=.
-forval i=1(.1)100{
+forval i=1(.001)100{
 	_pctile wealth [pweight=weight], p(`i')
 	replace wealthwt=`r(r1)' if popshare >= `i' & popshare != .
 }
@@ -433,9 +433,9 @@ pshare histogram,  ylabel(0(0.1)0.4, angle(hor)) ytitle("Share of Wealth") ///
 							*Section 4
 /******************************************************************************/
 *Graph Lorenz Curve
-lorenz estimate wealthwt, nquantiles(100)
+lorenz estimate wealthwt, nquantiles(1000)
 lorenz graph, aspectratio(1) ytitle("Wealth Share") xtitle("Population Share") ///
-	title("Lorenze Curve") legend(order(1 "Perfect Equality" 2 "Lorenz Curve")) ///
+	title("Lorenz Curve") legend(order(1 "Perfect Equality" 2 "Lorenz Curve")) ///
 	xlabel(, grid) lcolor("22 150 210") noci
 	
 *Chris' alternative
@@ -450,10 +450,19 @@ line wealthshare popshare if inrange(popshare, 0, 100), lcolor("22 150 210") ///
 
 gen topshare=.
 replace topshare=log(1-wealthshare/100)  if wealthshare!=.
+
+*Unweighted log wealth
 scatter topshare lnwealth  if popshare >=90, mcolor("22 150 210") /// 
-	legend(order(2 "Fitted Values")) ytitle("1-(CDF of Wealth)") ///
+	legend(order(2 "Fitted Values")) ytitle("Log(1-(CDF of Wealth))") ///
 	xtitle("Log Net Wealth") title("The Pareto Tail for the Top 10 Percent") ///
 	msymbol(smcircle)
+	
+*Weighted log wealth, PREFERRED	
+scatter topshare lnwtwealth  if popshare >=90, mcolor("22 150 210") /// 
+	legend(order(2 "Fitted Values")) ytitle("Log(1-(CDF of Wealth))") ///
+	xtitle("Log Net Wealth") title("The Pareto Tail for the Top 10 Percent") ///
+	msymbol(smcircle)
+
 
 /******************************************************************************/
 							*Section 6
@@ -461,7 +470,7 @@ scatter topshare lnwealth  if popshare >=90, mcolor("22 150 210") ///
 gen selfemp=.
 replace selfemp=0 if popshare!=.
 replace selfemp=1 if X4106>1 | X4706>1
-label var selfemp "Employed"
+label var selfemp "Self Employed"
 
 tabout bottomfifty nextforty topnine topone toppointone selfemp ///
 	using table3.xls, replace c(row)
