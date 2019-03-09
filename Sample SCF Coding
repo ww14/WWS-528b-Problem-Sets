@@ -1,0 +1,557 @@
+// READ RAW 2007 SCF data
+clear all
+set more off
+cd /users/nengbom/dropbox/BenRA/stata/SCF/data/
+
+use Y1 X42001 X14 X8023 ///
+	X413 X421 X424 X427 X430 X432 X7132 X7575 ///
+	X513 X526 ///
+	X604 X614 X623 ///
+	X716 ///
+	X805 X905 X1005 X1044 X816 X916 X1016 X1045 ///
+	X1108 X1119 X1130 X1136 X1111 X1122 X1133 ///
+	X1215 X1219 X1216 ///
+	X1409 X1509 X1609 X1417 X1517 X1617 ///
+	X1705 X1805 X1905 ///
+	X1706 X1806 X1906 X1715 X1815 X1915 X2002 X2006 X2012 X2016 ///
+	X3103 X3104 X3124 X3224 X3324 X3126 X3226 X3326 X3127 X3227 X3327 X3129 ///
+	X3229 X3329 X3335 ///
+	X3401 X3408 X3412 X3416 X3420 X3424 X3428 ///
+	X8166 X8167 X8168 X8188 X2218 X2318 X2418 X7169 X2219 X2319 X2419 X7170 ///
+	X2422 X2424 X2506 X2606 X2519 X2619 X2520 X2620 X2623 X2625 ///
+	X7822 X7845 X7868 X7922 X7945 X7968 X7824 X7847 X7870 X7924 X7947 X7970 ///
+	X7179 ///
+	X2723 X2740 X2823 X2840 X2923 X2940 X7183 ///
+	X3506 X3510 X3514 X3518 X3522 X3526 X3529 ///
+	X6551 X6559 X6567 X6552 X6560 X6568 X6553 X6561 X6569 X6554 X6562 X6570 ///
+	X6756 X6757 X6758 ///
+	X3721 ///
+	X3730 X3736 X3742 X3748 X3754 X3765 ///
+	X3822 X3824 X3826 X3828 X3830 X7787 X6704 ///
+	X3902 X7635 X7636 X7637 X7638 X7639 X6706 ///
+	X3915 X3930 X3932 ///
+	X6577 X6587 ///
+	X4006 X4008 X4009 X4010 ///
+	X4018 X4022 X4026 X4030 X4032 ///
+	X4106 X4706 X4110 X4710 X4111 X4711 X4112 X4712 X4131 X4731 X4132 X4732 ///
+	X11032 X11132 X11232 X11332 X11432 X11532 X11070 X11170 X11270 X11370 ///
+	X11470 X11570 X11027 X11127 X11227 X11327 X11427 X11527 X11033 X11133 ///
+	X11233 X11333 X11433 X11533 X11259 X11559 ///
+	X4507 X5107 X4508 X5108 X4509 X5109 X4510 X5110 ///
+	X6462 X6467 X6472 X6477 X6482 X6487 X6957 X8468 X5604 ///
+	X5612 X5620 X5628 X5636 X5644 X6997 X7661 X5901 X6101 X5902 X6102 X5904 X6104 X6809 using p07i6.dta
+
+rename Y1 id
+// Get replicate numbers
+gen repl = mod(id,10)
+replace id = (id-repl)/10
+rename X42001 weight
+rename X14 age
+rename X8023 marstat
+
+// CREDIT CARD DEBT
+/* Recode zeros to zeros, missing is zero as well. Topcoding is 999,999 and is 
+not binding */
+replace X413 = 0 if X413 == -1
+replace X421 = 0 if X421 == -1
+replace X424 = 0 if X424 == -1
+replace X427 = 0 if X427 == -1
+replace X430 = 0 if X430 == -1
+gen Credit = X413 + X421 + X424 + X427 + X430 + X7575
+drop X413 X421 X424 X427 X430 X7575
+label variable Credit "Credit card debt"
+
+// Interest rate paid on credit card with the highest balance
+rename X7132 ccintrate
+label variable ccintrate "Interest rate charged on credit card with highest balance"
+
+// Pay off regularly or not
+rename X432 freqpayoff
+label define freqpayoff 0 "Inap" 1 "Always or almost always" 3 "Sometimes" 5 "Hardly ever"
+label values freqpayoff freqpayoff
+
+// FARMLAND WITH BUSINESS
+/* X513 is owned farmland and top coded at 99,999,999 (not binding). X526 is 
+the value of the share of partly owned farmland and topcoded at 99,999,999 (not 
+binding)
+*/
+gen Farm = X513 + X526
+label variable Farm "Value of fully or partially owned farm"
+drop X513 X526
+
+// MOBILE HOME
+/* X604 is the value of site and top coded at 999,999 (not binding).
+*/
+gen Mobilehome = X604 + X614 + X623
+label variable Mobilehome "Value of mobile home and/or site"
+drop X604 X614 X623
+
+// HOME
+/* X716 is the value of home, incl farm not operated as business. X805 and X905 
+are first and second mortgage, respectively, and X1005 is other home equity loan */
+gen Home = X716 
+label variable Home "Value of home"
+drop X716
+gen Mortgage = X805 + X905 + X1005 + X1044
+label variable Mortgage "Total home loans incl mortgages, other home equity loans and other property loans"
+rename X805 mortgage1
+rename X905 mortgage2
+rename X1005 mortgage3
+rename X1044 mortgage4
+// Interest rate is coded -1 for zero, 0 for missing
+replace X816 = . if X816 == 0
+replace X816 = 0 if X816 == -1
+replace X916 = . if X916 == 0
+replace X916 = 0 if X916 == -1
+replace X1016 = . if X1016 == 0
+replace X1016 = 0 if X1016 == -1
+replace X1045 = . if X1045 == 0
+replace X1045 = 0 if X1045 == -1
+rename X816 hmrate1
+rename X916 hmrate2
+rename X1016 hmrate3
+rename X1045 hmrate4
+label variable hmrate1 "Interest rate charged on first mortgage"
+label variable hmrate2 "Interest rate charged on second mortgage"
+label variable hmrate3 "Interest rate charged on other home equity loan"
+label variable hmrate4 "Interest rate charged on other property loan"
+
+// LINES OF CREDIT
+/* X1108, X1119 and X1130 are first, second and third lines of credit, X1136 is
+all remaining lines of credit */
+gen Cline = X1108 + X1119 + X1130 + X1136
+label variable Cline "Amount borrowed on lines of credit"
+rename X1108 cline1
+rename X1119 cline2
+rename X1130 cline3
+rename X1136 cline4
+// Interest rate charged
+rename X1111 clinerate1
+rename X1122 clinerate2
+rename X1133 clinerate3
+label variable clinerate1 "Interest rate on first line of credit"
+label variable clinerate2 "Interest rate on second line of credit"
+label variable clinerate3 "Interest rate on third line of credit"
+
+// HOME IMPROVEMENT LOANS
+gen Homeimploan = X1215 + X1219
+label variable Homeimploan "Total loans for home improvement"
+drop X1215 X1219
+// Interest rate charged
+replace X1216 = . if X1216 == 0
+replace X1216 = 0 if X1216 == -1
+rename X1216 homeimpintrate 
+label variable homeimpintrate "Interest charged on home improvement loan"
+
+// LAND CONTRACTS AND NOTES GIVEN BY R
+gen Lendtooth = X1409 + X1509 + X1609 - X1417 - X1517 - X1617
+drop X1409 X1509 X1609 X1417 X1517 X1617
+label variable Lendtooth "Money lent to others for property purchase minus remaining loans"
+
+// INVESTMENT REAL ESTATE AND VACATION PROPERTIES
+/* X1706, X1806 and X1906 report total value of timeshare/property; X1705, X1805
+and X1905 report share of property owned by R; X2002 reports value of total share
+of vacation home or recreational property;  */
+replace X2012 = 0 if X2012 == -1
+gen Investprop = X1705*X1706/10000 + X1805*X1806/10000 + X1905*X1906/10000 + ///
+			  	 X2002 + X2012
+label variable Investprop "Value of investment property and vacation homes"
+drop X1705 X1706 X1805 X1806 X1905 X1906 X2002 X2012
+// Loans outstanding
+gen Investproploans = X1715 + X1815 + X1915 + X2006 + X2016
+label variable Investproploans "Loans against investment property and vacation homes"
+drop X1715 X1815 X1915 X2006 X2016
+
+
+// BUSINESSES
+/* Do you and your family living here own or share ownership in any privately-held 
+businesses, farms, professional practices, limited partnerships or any other 
+types of partnerships? Do not include corporations with publicly-traded stock or 
+any partnerships that have already been recorded earlier. */
+rename X3103 ownbusornot
+label define ownbusornot 1 "Yes" 5 "No"
+label values ownbusornot ownbusornot
+label variable ownbusornot "Do you and your family living here own or share ownership of private business?"
+
+// ACTIVELY MANAGED BUSINESSES
+// Do you have an active management role in any of these businesses?
+rename X3104 Amanagement
+label define Amanagement 1 "Yes" 5 "No" 0 "Inap"
+label values Amanagement Amanagement
+label variable Amanagement "Do you have an active management role in any of these businesses?"
+// Amount the business owes R
+gen owedfrombus = X3124 + X3224 + X3324
+label variable owedfrombus "Amount the business owes R"
+drop X3124 X3224 X3324
+// Amount owed to business
+// If recorded earlier, set to zero
+replace X3126 = 0 if X3127 == 1
+replace X3226 = 0 if X3227 == 1
+replace X3326 = 0 if X3327 == 1
+gen owetobus = X3126 + X3226 + X3326
+label variable owetobus "Amount R owes business"
+drop X3126 X3226 X3326 X3127 X3227 X3327
+// Value of business (recode nothing to 0)
+replace X3129 = 0 if X3129 == -1
+replace X3229 = 0 if X3229 == -1
+replace X3329 = 0 if X3329 == -1
+replace X3335 = 0 if X3335 == -1
+gen ActBusiness = X3129 + X3229 + X3329 + X3335
+label variable ActBusiness "Value of actively managed business
+drop X3129 X3229 X3329 X3335
+
+// NON-ACTIVELY MANAGED BUSINESSES
+rename X3401 NAmanagement
+label variable NAmanagement "Not active management role in business"
+label define NAmanagement 1 "Yes" 5 "No"
+// What could you sell your shares for
+replace X3428 = 0 if X3428 == -1
+gen NABusiness = X3408 + X3412 + X3416 + X3420 + X3424 + X3428
+label variable NABusiness "What could you sell your share of all non-actively managed businesses for?"
+drop X3408 X3412 X3416 X3420 X3424 X3428
+
+
+// VEHICLES
+gen Vehicles = X8166 + X8167 + X8168 + X8188 + X2422 + X2506 + X2606 + X2623
+label variable Vehicles "Prevailing retail value of vehicles (incl motor homes, RVs, boats, airplanes, etc.)"
+drop X8166 X8167 X8168 X8188 X2422 X2506 X2606 X2623
+// Vehicle loans
+gen VehLoan = X2218 + X2318 + X2418 + X7169 + X2424 + X2519 + X2619 + X2625
+label variable VehLoan "Owed on vehicle loans"
+rename X2218 vehloan1
+label variable vehloan1 "Owed on vehicle loan 1"
+rename X2318 vehloan2
+label variable vehloan2 "Owed on vehicle loan 2"
+rename X2418 vehloan3
+label variable vehloan3 "Owed on vehicle loan 3"
+rename X7169 vehloan4
+label variable vehloan4 "Owed on vehicle loan 4"
+rename X2519 vehloan5
+label variable vehloan5 "Owed on vehicle loan 5"
+rename X2619 vehloan6
+label variable vehloan6 "Owed on vehicle loan 6"
+drop X2424 X2625
+// Interest rate paid on vehicle loans
+replace X2219 = . if X2219 == 0
+replace X2219 = 0 if X2219 == -1
+replace X2319 = . if X2319 == 0
+replace X2319 = 0 if X2319 == -1
+replace X2419 = . if X2419 == 0
+replace X2419 = 0 if X2419 == -1
+replace X7170 = . if X7170 == 0
+replace X7170 = 0 if X7170 == -1
+replace X2520 = . if X2520 == 0
+replace X2520 = 0 if X2520 == -1
+replace X2620 = . if X2620 == 0
+replace X2620 = 0 if X2620 == -1
+rename X2219 vehloanrate1
+label variable vehloanrate1 "Interest rate on vehicle loan 1"
+rename X2319 vehloanrate2
+label variable vehloanrate2 "Interest rate on vehicle loan 2"
+rename X2419 vehloanrate3
+label variable vehloanrate3 "Interest rate on vehicle loan 3"
+rename X7170 vehloanrate4
+label variable vehloanrate4 "Interest rate on vehicle loan 4"
+rename X2520 vehloanrate5
+label variable vehloanrate5 "Interest rate on vehicle loan 5"
+rename X2620 vehloanrate6
+label variable vehloanrate6 "Interest rate on vehicle loan 6"
+
+
+// EDUCATION LOANS
+gen EduLoans = X7824 + X7847 + X7870 + X7924 + X7947 + X7970 + X7179
+label variable EduLoans "Amount owed on education loans"
+rename X7824 eduloan1
+label variable eduloan1 "Amount owed on education loan 1"
+rename X7847 eduloan2
+label variable eduloan2 "Amount owed on education loan 2"
+rename X7870 eduloan3
+label variable eduloan3 "Amount owed on education loan 3"
+rename X7924 eduloan4
+label variable eduloan4 "Amount owed on education loan 4"
+rename X7947 eduloan5
+label variable eduloan5 "Amount owed on education loan 5"
+rename X7970 eduloan6
+label variable eduloan6 "Amount owed on education loan 6"
+drop X7179
+// Interest rate on education loans
+rename X7822 eduloanrate1 
+label variable eduloanrate1 "Interest rate on education loan 1"
+rename X7845 eduloanrate2
+label variable eduloanrate2 "Interest rate on education loan 2"
+rename X7868 eduloanrate3 
+label variable eduloanrate3 "Interest rate on education loan 3"
+rename X7922 eduloanrate4
+label variable eduloanrate4 "Interest rate on education loan 4"
+rename X7945 eduloanrate5
+label variable eduloanrate5 "Interest rate on education loan 5"
+rename X7968 eduloanrate6
+label variable eduloanrate6 "Interest rate on education loan 6"
+
+
+// OTHER CONSUMER LOANS
+gen OthCLoan = X2723 + X2740 + X2823 + X2840 + X2923 + X2940 + X7183
+label variable OthCLoan "Other consumer loans"
+drop X2723 X2740 X2823 X2840 X2923 X2940 X7183
+
+
+// CHECKING ACCOUNTS
+replace X3506 = 0 if X3506 == -1
+replace X3510 = 0 if X3510 == -1
+replace X3514 = 0 if X3514 == -1
+replace X3518 = 0 if X3518 == -1
+replace X3522 = 0 if X3522 == -1
+replace X3526 = 0 if X3526 == -1
+replace X3529 = 0 if X3529 == -1
+gen Checking = X3506 + X3510 + X3514 + X3518 + X3522 + X3526 + X3529
+label variable Checking "Total amount in checking accounts"
+drop X3506 X3510 X3514 X3518 X3522 X3526 X3529
+
+
+// RETIREMENT SAVINGS
+gen IRA = X6551 + X6559 + X6567 + X6552 + X6560 + X6568 + X6553 + X6561 + X6569 ///
+		  + X6554 + X6562 + X6570 + X6756 + X6757 + X6758
+drop X6551 X6559 X6567 X6552 X6560 X6568 X6553 X6561 X6569 X6554 X6562 X6570 ///
+	 X6756 X6757 X6758
+label variable IRA "IRA, Roth IRA, roll-over IRA and Keogh accounts"
+
+
+// CERTIFICATES OF DEPOSIT
+rename X3721 CDs
+label variable CDs "Certificates of deposit"
+
+
+// SAVINGS ACCOUNTS
+replace X3730 = 0 if X3730 == -1
+replace X3736 = 0 if X3736 == -1
+replace X3742 = 0 if X3742 == -1
+replace X3748 = 0 if X3748 == -1
+replace X3754 = 0 if X3754 == -1
+replace X3765 = 0 if X3765 == -1
+gen Savings = X3730 + X3736 + X3742 + X3748 + X3754 + X3765
+label variable Savings "Total amount in savings accounts"
+drop X3730 X3736 X3742 X3748 X3754 X3765
+
+
+// MUTUAL FUNDS
+gen MutualFund = X3822 + X3824 + X3826 + X3828 + X3830 + X7787 + X6704
+label variable MutualFund "Total value of mutual funds"
+drop X3822 X3824 X3826 X3828 X3830 X7787 X6704
+
+
+// BONDS 
+gen Bonds = X3902 + X7635 + X7636 + X7637 + X7638 + X7639 + X6706
+label variable Bonds "Total value of bonds (at market value if available)"
+drop X3902 X7635 X7636 X7637 X7638 X7639 X6706
+
+
+// STOCKS
+replace X3930 = 0 if X3930 == -1
+replace X3932 = 0 if X3932 == -1
+gen Stocks = X3915 + X3930 - X3932
+label variable Stocks "Total value of stocks and cash or call money accounts minus margin loans"
+drop X3915 X3930 X3932 
+
+
+// ANNUITIES, TRUSTS AND MANAGED INVESTMENT ACCOUNTS
+gen ATMIA = X6577 + X6587
+label variable ATMIA "Annuities, trusts and managed investment accounts"
+drop X6577 X6587
+
+
+// LIFEINSURANCE
+// If life-insurance is net and loans are reported earlier, add them back
+replace X4006 = X4006 + X4010 if X4008 == 1
+// Subtract loans on life-insurance if not reported earlier
+replace X4006 = X4006 - X4010 if X4009 == 5
+rename X4006 LifeInsurance
+label variable LifeInsurance "Current 'cash value' of life-insurance"
+drop X4008 X4009 X4010
+
+
+// MISCELLANEOUS ASSETS AND DEBTS
+gen MiscAssets = X4018 + X4022 + X4026 + X4030 - X4032
+label variable MiscAssets "Miscellaneous assets minus debts"
+drop X4018 X4022 X4026 X4030 X4032
+
+
+// EMPLOYMENT STATUS
+rename X4106 selfemp
+rename X4706 selfemp_s
+label define selfemp 1 "Someone else" 2 "Self-employed" 3 "Partnership" 4 "Consultant" -7 "Other" 0 "Inap"
+label values selfemp selfemp
+label values selfemp_s selfemp
+label variable selfemp "R working for someone else or self-employed?"
+label variable selfemp_s "Spouse/partner working for someone else or self-employed?"
+
+
+// HOURS AND SALARY
+rename X4110 hours
+rename X4710 hours_s
+rename X4111 weeks
+rename X4711 weeks_s
+// Labor income
+replace X4112 = 0 if X4112 == -1
+replace X4712 = 0 if X4712 == -1
+rename X4112 Salary
+rename X4712 Salary_s
+// Business income
+replace X4131 = 0 if X4131 == -1
+replace X4731 = 0 if X4731 == -1
+// Recode business income to annual numbers
+replace X4131 = X4131*5*weeks if X4132 == 1
+replace X4731 = X4731*5*weeks_s if X4732 == 1
+replace X4131 = X4131*weeks if X4132 == 2
+replace X4731 = X4731*weeks_s if X4732 == 2
+replace X4131 = X4131*weeks/2 if X4132 == 3
+replace X4731 = X4731*weeks_s/2 if X4732 == 3
+replace X4131 = X4131*12 if X4132 == 4
+replace X4731 = X4731*12 if X4732 == 4
+replace X4131 = X4131*4 if X4132 == 5
+replace X4731 = X4731*4 if X4732 == 5
+replace X4131 = X4131*2 if X4132 == 11
+replace X4731 = X4731*2 if X4732 == 11
+replace X4131 = X4131*6 if X4132 == 12
+replace X4731 = X4731*6 if X4732 == 12
+replace X4131 = X4131*hours*weeks if X4132 == 18
+replace X4731 = X4731*hours_s*weeks_s if X4732 == 18
+replace X4131 = X4131*3 if X4132 == 21
+replace X4731 = X4731*3 if X4732 == 21
+replace X4131 = X4131*weeks/2 if X4132 == 31
+replace X4731 = X4731*weeks_s/2 if X4732 == 31
+drop X4132 X4732
+rename X4131 Businc
+rename X4731 Businc_s
+
+
+// PENSIONS FOR HEAD AND SPOUSE FROM CURRENT MAIN JOB
+// Generate gross amounts
+replace X11032 = 0 if X11032 == -1
+replace X11132 = 0 if X11132 == -1
+replace X11232 = 0 if X11232 == -1
+replace X11332 = 0 if X11332 == -1
+replace X11432 = 0 if X11432 == -1
+replace X11532 = 0 if X11532 == -1
+replace X11259 = 0 if X11259 == -1
+replace X11559 = 0 if X11559 == -1
+replace X11032 = X11032 + X11027 if X11033 == 1
+replace X11132 = X11132 + X11127 if X11133 == 1
+replace X11232 = X11232 + X11227 if X11233 == 1
+replace X11332 = X11332 + X11327 if X11333 == 1
+replace X11432 = X11432 + X11427 if X11433 == 1
+replace X11532 = X11532 + X11527 if X11533 == 1
+// If loan isn't already recorded, need to remove it
+replace X11032 = X11032 - X11027 if X11070 == 5
+replace X11132 = X11132 - X11127 if X11170 == 5
+replace X11232 = X11232 - X11227 if X11270 == 5
+replace X11332 = X11332 - X11327 if X11370 == 5
+replace X11432 = X11432 - X11427 if X11470 == 5
+replace X11532 = X11532 - X11527 if X11570 == 5
+gen Pension1 = X11032 + X11132 + X11232 + X11332 + X11432 + X11532 + X11259 + X11559
+label variable Pension1 "Pension from current main job"
+drop X11032 X11132 X11232 X11332 X11432 X11532 X11259 X11559 X11027 X11127 ///
+	 X11227 X11327 X11427 X11527 X11033 X11133 X11233 X11333 X11433 X11533 ///
+	 X11070 X11170 X11270 X11370 X11470 X11570
+
+// OTHER THAN MAIN JOB
+replace X4507 = 0 if X4507 == -1
+replace X5107 = 0 if X5107 == -1
+replace X4509 = 0 if X4509 == -1
+replace X5109 = 0 if X5109 == -1
+replace X4509 = 0 if X4509 == -1
+replace X5109 = 0 if X5109 == -1
+replace X4509 = X4509*5*X4508 if X4510 == 1
+replace X5109 = X5109*5*X5108 if X5110 == 1
+replace X4509 = X4509*X4508 if X4510 == 2
+replace X5109 = X5109*X5108 if X5110 == 2
+replace X4509 = X4509*X4508/2 if X4510 == 3
+replace X5109 = X5109*X5108/2 if X5110 == 3
+replace X4509 = X4509*12 if X4510 == 4
+replace X5109 = X5109*12 if X5110 == 4
+replace X4509 = X4509*4 if X4510 == 5
+replace X5109 = X5109*4 if X5110 == 5
+replace X4509 = X4509*2 if X4510 == 11
+replace X5109 = X5109*2 if X5110 == 11
+replace X4509 = X4509*6 if X4510 == 12
+replace X5109 = X5109*6 if X5110 == 12
+replace X4509 = X4509*X4507*X4508 if X4510 == 18
+replace X5109 = X5109*X5107*X5108 if X5110 == 18
+replace X4509 = X4509*X4508/2 if X4510 == 31
+replace X5109 = X5109*X5108/2 if X5110 == 31
+drop X4510 X5110
+rename X4507 hours2
+rename X5107 hours2_s
+rename X4508 weeks2
+rename X5108 weeks2_s
+rename X4509 Salary2
+rename X5109 Salary2_s
+
+
+// CURRENT BENEFITS FROM PENSIONS
+replace X6957 = 0 if X6957 == -1
+replace X8468 = 0 if X8468 == -1
+replace X5604 = 0 if X5604 == -1
+replace X5612 = 0 if X5612 == -1
+replace X5620 = 0 if X5620 == -1
+replace X5628 = 0 if X5628 == -1
+replace X5636 = 0 if X5636 == -1
+replace X5644 = 0 if X5644 == -1
+replace X6997 = 0 if X6997 == -1
+gen Pension2 = X6462 + X6467 + X6472 + X6477 + X6482 + X6487 + X6957 + X8468 + ///
+			   X5604 + X5612 + X5620 + X5628 + X5636 + X5644 + X6997
+drop X6462 X6467 X6472 X6477 X6482 X6487 X6957 X8468 X5604 X5612 X5620 X5628 ///
+	 X5636 X5644 X6997
+label variable Pension2 "Current and future pension benefits"
+
+
+// TRUSTS
+replace X7661 = 0 if X7661 == -1
+rename X7661 Trust
+label variable Trust "Current value of trust or foundation"
+
+
+// EDUCATION
+rename X5901 edu
+rename X6101 edus
+rename X5902 highschool
+rename X6102 highschools
+rename X5904 college
+rename X6104 colleges
+gen Edu = 0
+replace Edu = 1 if edu < 12 | (edu == 12 & highschool == 5)
+replace Edu = 2 if edu == 12 & highschool != 5
+replace Edu = 3 if edu > 12 
+replace Edu = 4 if edu >= 16
+replace Edu = 5 if edu >= 17
+replace Edu = 0 if edu > 17
+drop edu highschool college
+label define edu 0 "NA" 1 "Less than highschool" 2 "High-school" 3 "Some college" ///
+				 4 "College graduate" 5 "More than college"
+label values Edu edu
+label variable Edu "Education of head"
+gen Edu_s = 0
+replace Edu_s = 1 if edus < 12 | (edus == 12 & highschools == 5)
+replace Edu_s = 2 if edus == 12 & highschools != 5
+replace Edu_s = 3 if edus > 12 
+replace Edu_s = 4 if edus >= 16
+replace Edu_s = 5 if edus >= 17
+replace Edu_s = 0 if edus > 17
+drop edus highschools colleges
+label define edus 0 "NA" 1 "Less than highschool" 2 "High-school" 3 "Some college" ///
+				  4 "College graduate" 5 "More than college"
+label values Edu_s edus
+label variable Edu "Education of spouse"
+	
+	
+// RACE
+rename X6809 race	
+replace race = 0 if race < 1 | race > 2
+label define rac 0 "Other" 1 "White" 2 "Black"
+label values race rac
+	 
+	 
+	 
+gen year = 2007
+
+save /users/nengbom/dropbox/BenRA/stata/SCF/output/RAW2007, replace
+
