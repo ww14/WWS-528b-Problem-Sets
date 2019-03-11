@@ -1,0 +1,23 @@
+http://www.princeton.edu/~otorres/DID101.pdf
+https://www.stata.com/support/faqs/graphics/gph/graphdocs/linear-prediction-plot-with-cis-with-overlaid-scatterplot/
+
+net install rdrobust, from(https://sites.google.com/site/rdpackages/rdrobust/stata) replace
+
+import delimited FILENAME
+
+reg %delta_followers t##video followers, r
+
+twoway scatter %delta_followers t || lfitci %delta_followers t if t<0 & video==0||  lfitci %delta_followers t if t<0 & video==1||  lfitci %delta_followers t if t>=0 & video==0|| lfitci %delta_followers t if t>=0 & video==1||
+
+
+*OR 
+rdplot %delta_followers t
+
+*https://d1e153b2-a-62cb3a1a-s-sites.googlegroups.com/site/rdpackages/rdrobust/Calonico-Cattaneo-Farrell-Titiunik_2017_Stata.pdf?attachauth=ANoY7cryr-BPRsJzU-s_FDIbL4ZW_fw_9iUXFmNG7euvoLSrA40rxOxjxPF5MnbmHYVcIK4nanQ1yzI0tM08E25c79XGkqOp6H5LGkEXRuzz1CI2U69MNbhLqy7OkIrhcQEt0nSfyzeLIcVph7r8NhNugUGK71i8vSYx_AwB0kui-ENWb8ddTJppFekyMLKO1ITJLmlA54Ps6FTZPm3su8RvVZ4ZkYNZYdEVYVMQk9XeV7OgD9yMuqDKdKZQoMimQgSCPRrGSGwPxukIy2tl454FxzaA4hESDw%3D%3D&attredirects=0
+
+quietly rdrobust vote margin
+. rdplot vote margin if -e(h_l)<= margin & margin <= e(h_r),
+> binselect(esmv) kernel(triangular) h(`e(h_l)´ `e(h_r)´) p(1)
+> graph_options(title("RD Plot: U.S. Senate Election Data")
+> ytitle(Vote Share in Election at time t+2)
+> xtitle(Vote Share in Election
